@@ -238,27 +238,29 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     return; 
 }
 
-// TODO: update last_seen to be able to check whether to send a packet
 void deleteNotSeen (RoutingTable rt, int curr_turn) {
     
     RoutingNode tmp;
     tmp.next = rt;
     RoutingTable it = &tmp;
 
-    for (; it->next != RT_EMPTY; it = it->next) {
+    while (it->next != RT_EMPTY) {
         RoutingTable next = it->next;
+
         if (next->nd->direct) {
             if (next->nd->active_network
                 && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF)
                 markUnreachable(next->nd, rt, curr_turn, false);
+            it = it->next; 
         }
         else if (next->nd->d >= INF
-                && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
+                 && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
             it->next = next->next;
             free(next);
-        }
+        } 
+        else
+            it = it->next;
     }
-
 }
 
 NetData* parseDatagram(uint8_t *buffer, uint32_t ip ) {
