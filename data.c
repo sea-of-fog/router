@@ -97,7 +97,7 @@ uint32_t getBroadcast (NetData *nd) {
 }
 
 void getNetwork (uint8_t *buf, uint32_t addr, uint8_t mask) {
-    uint32_t net_addr = addr & ((~(1 << mask)) - 1);
+    uint32_t net_addr = addr & ((~(1 << (32 - mask))) - 1);
     buf[0] = (net_addr >> 24) & 0xFF;
     buf[0] = (net_addr >> 16) & 0xFF;
     buf[0] = (net_addr >>  8) & 0xFF;
@@ -139,8 +139,7 @@ void printNetData(NetData *nd) {
         nd->next.addr[2],
         nd->next.addr[3]
     );
-    if (nd->direct) {
-        if(nd->active_network)
+    if (nd->direct) { if(nd->active_network)
             printf (
                 "%s distance %u connected directly\n",
                 addr,
