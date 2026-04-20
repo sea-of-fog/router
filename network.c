@@ -99,7 +99,7 @@ void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
 
     if (sent != 9) {
         if (PRINT_SEND_ERRORS) error("sendTable");
-        markUnreachable(tgt, rt, turn);
+        markUnreachable(tgt, rt, turn, true);
     }
     else if (sent == 9)
         markReachableNetwork(tgt);

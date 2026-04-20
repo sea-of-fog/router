@@ -61,22 +61,17 @@ void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
         }
     }
 }
-// TODO: refactor with an additional argument
-void markUnreachable (NetData *nd, RoutingTable rt, int turn) {
-    if (nd->active_router)
+
+// type = true means unreachable because of network
+void markUnreachable (NetData *nd, RoutingTable rt, int turn, bool type) {
+    if (nd->active_router) {
         nd->last_seen = turn;
-    nd->active_network = false;
+        propagateInfinity(nd, rt, turn);
+    }
+    if (type)
+        nd->active_network = false;
     nd->active_router  = false;
     nd->d = INF;
-    propagateInfinity(nd, rt, turn);
-}
-
-void markUnreachableRouter (NetData *nd, RoutingTable rt, int turn) {
-    if (nd->active_router)
-        nd->last_seen = turn;
-    nd->active_router = false;
-    nd->d = INF;
-    propagateInfinity(nd, rt, turn);
 }
 
 void markReachableRouter (NetData *nd, int turn) {
@@ -269,7 +264,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
         if (next->nd->direct) {
             if (next->nd->active_network
                 && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF)
-                markUnreachableRouter(next->nd, rt, curr_turn);
+                markUnreachable(next->nd, rt, curr_turn, false);
         }
         else if (next->nd->d >= INF
                 && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
