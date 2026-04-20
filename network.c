@@ -89,7 +89,7 @@ void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
         return;
 
     ssize_t sent = sendto(
-        sockfd, 
+        sockfd,
         msg, 
         9, 
         0, 

@@ -50,7 +50,7 @@ uint32_t addrGetBroadcast (NetAddr na) {
 }
 
 bool shouldSend(NetData *nd, int turn) {
-    return nd->active_network;
+    return !nd->direct || nd->direct && (turn - nd->last_seen < TURNS_AFTER_INF);
 }
 
 void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
