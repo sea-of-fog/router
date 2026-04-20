@@ -30,7 +30,7 @@ typedef RoutingNode* RoutingTable;
 
 const RoutingTable RT_EMPTY = (RoutingTable) NULL;
 
-inline uint32_t addrAsNumber(uint8_t addr[4]) {
+uint32_t addrAsNumber(uint8_t addr[4]) {
     return (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 }
 
@@ -162,16 +162,16 @@ NetData* scanNeighbour() {
 }
 
 // Iterate through the routing table to find the sender
-// ERROR CODE is -1
+// return 0 if not found (this will always happen from packets received from oneself!)
 NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
     for (; rt != RT_EMPTY; rt = rt->next) {
         dgram->next.mask = rt->nd->na.mask;
-        if (addrGetBroadcast(rt->nd->na) == addrGetBroadcast(dgram->next)) {
+        if (addrAsNumber(rt->nd->na.addr) == addrAsNumber(dgram->next.addr)) {
             rt->nd->last_seen = turn;
             return rt->nd;
         }
     }
-    return (NetData*) -1;
+    return (NetData*) 0;
 }
 
 // There are generally two cases:
@@ -182,6 +182,8 @@ NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
 // the datagram distance as d
 void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     NetData* sender_nd = findSender(dgram, rt, turn);
+    if (sender_nd == 0)
+        return;
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
             if (dgram->d >= INF 
@@ -224,6 +226,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
             free(next);
         }
     }
+
 }
 
 NetData* parseDatagram(uint8_t *buffer, uint32_t ip ) {
