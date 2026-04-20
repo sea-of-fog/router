@@ -1,5 +1,5 @@
 // Length of a turn in ms
-#define TURN_MS 5000 
+#define TURN_MS 2500 
 
 // How many turns to wait before declaring a neighbouring network to be unreachable?
 #define TURNS_BEFORE_INF 3

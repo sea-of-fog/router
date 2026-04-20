@@ -6,7 +6,7 @@
 
 void openSocket ();
 int watch (uint64_t time);
-void sendTable (RoutingTable rt);
+void sendTable (RoutingTable rt, int turn);
 NetData* receivePacket ();
 
 #endif

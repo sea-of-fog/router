@@ -22,9 +22,10 @@ NetData* getNetData (RoutingTable rt);
 uint32_t getBroadcast (NetData* nd);
 RoutingTable getNext (RoutingTable rt);
 bool getDirect(NetData *nd);
-bool getActive(NetData *nd);
+bool shouldSend(NetData *nd, int turn);
 
 void markUnreachable(NetData* nd);
-void markReachable(NetData* nd);
+void markReachableNetwork(NetData* nd);
+void markReachableRouter(NetData *nd);
 
 #endif 

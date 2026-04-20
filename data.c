@@ -16,7 +16,8 @@ typedef struct net_data {
     NetAddr  na;
     NetAddr  next;
     bool direct;
-    bool active;
+    bool active_network;
+    bool active_router;
     uint32_t d;
     uint32_t direct_d;
     uint8_t  last_seen;
@@ -46,10 +47,27 @@ uint32_t addrGetBroadcast (NetAddr na) {
            | ((1 << 32 - na.mask) - 1);
 }
 
-void markReachable (NetData *nd) {
-    nd->active = true;
+// TODO: check if last_seen and current turn are close enough
+bool shouldSend(NetData *nd, int turn) {
+    return true;
+}
+
+// TODO: propagate the infinite value to all networks directly connected via this router
+void markUnreachableRouter (NetData *nd) {
+    nd->active_router = false;
+    if (nd->d == nd->direct_d)
+        nd->d = INF;
+}
+
+void markReachableRouter (NetData *nd) {
+    nd->active_router = true; 
+    nd->active_network = true;
     if (nd->direct_d < nd->d)
         nd->d = nd->direct_d;
+}
+
+void markReachableNetwork (NetData *nd) {
+    nd->active_network = true;
 }
 
 uint32_t getBroadcast (NetData *nd) {
@@ -62,7 +80,7 @@ uint32_t getBroadcast (NetData *nd) {
 // TODO: refactor with sprintf() repeat less
 void printNetData(NetData *nd) {
     if (nd->direct) {
-        if(nd->active)
+        if(nd->active_router)
             printf (
                 "%u.%u.%u.%u/%u distance %u connected directly\n",
                 nd->na.addr[0], 
@@ -160,7 +178,8 @@ NetData* scanNeighbour() {
     NetData* nd = (NetData*) malloc(sizeof(NetData));
         nd->na        = na;
         nd->direct    = true;
-        nd->active    = true;
+        nd->active_network = true;
+        nd->active_router  = true;
         nd->last_seen = 0;
         nd->d         = d;
         nd->direct_d  = d;
@@ -190,7 +209,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     NetData* sender_nd = findSender(dgram, rt, turn);
     if (sender_nd == 0)
         return;
-    markReachable(sender_nd);
+    markReachableRouter(sender_nd);
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
             if (dgram->d >= INF 
@@ -213,6 +232,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     return; 
 }
 
+// TODO: update last_seen to be able to check whether to send a packet
 void deleteNotSeen (RoutingTable rt, int curr_turn) {
     
     RoutingNode tmp;
@@ -222,13 +242,12 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
     for (; it->next != RT_EMPTY; it = it->next) {
         RoutingTable next = it->next;
         if (next->nd->direct) {
-            if ((curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF) {
-                next->nd->active = false; 
-                next->nd->d = INF;
-            } 
+            if (next->nd->active_network
+                && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF)
+                markUnreachableRouter(next->nd);
         }
         else if (next->nd->d >= INF
-                && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF) {
+                && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
             it->next = next->next;
             free(next);
         }
@@ -272,14 +291,12 @@ RoutingTable getNext (RoutingTable rt) {
     return rt->next;
 }
 
+// TODO: propagate the infinite value to all network directly connected via this router
 void markUnreachable (NetData *nd) {
-    nd->active = false;
+    nd->active_network = false;
+    nd->active_router  = false;
     if (nd->d == nd->direct_d)
         nd->d = INF;
-}
-
-bool getActive(NetData* nd) {
-    return nd->active;
 }
 
 bool getDirect(NetData* nd) {

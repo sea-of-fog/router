@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     printRoutingTable(routing, 0);
 
     openSocket();
-    sendTable(routing);
+    sendTable(routing, 0);
 
     struct timespec last_sent, curr_time;
     clock_gettime(CLOCK_REALTIME, &last_sent);
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
                 updateDistance(nd, routing);
         }
         else if (packets == 0) {
-            sendTable(routing);
+            sendTable(routing, turn);
             printRoutingTable(routing, turn);
             deleteNotSeen(routing, turn);
             clock_gettime(CLOCK_REALTIME, &last_sent);

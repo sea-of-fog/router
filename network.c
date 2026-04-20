@@ -37,6 +37,7 @@ void openSocket() {
 }
 
 // TODO: fix error handling; errors are now expected
+// TODO: If I receive a packet, will it be marked as reachable? Mark reachable
 NetData* receivePacket() {
 
     struct sockaddr_in sender;
@@ -73,7 +74,8 @@ int watch (uint64_t time) {
         return 1;
 }
 
-void sendRecord(NetData *nd, NetData *tgt) {
+// TODO: add error handling
+void sendRecord(NetData *nd, NetData *tgt, int turn) {
     uint8_t msg[9];
     NetDataToBuffer(nd, msg);
 
@@ -81,6 +83,9 @@ void sendRecord(NetData *nd, NetData *tgt) {
         address.sin_family = AF_INET;
         address.sin_port   = htons(54321);
         address.sin_addr.s_addr   = htonl(getBroadcast(tgt));
+
+    if (!shouldSend(nd, turn))
+        return;
 
     ssize_t sent = sendto(
         sockfd, 
@@ -95,16 +100,16 @@ void sendRecord(NetData *nd, NetData *tgt) {
         if (PRINT_SEND_ERRORS) error("sendTable");
         markUnreachable(tgt);
     }
-    else if (sent == 9 && getDirect(tgt) && !getActive(tgt))
-        markReachable(tgt);
+    else if (sent == 9)
+        markReachableNetwork(tgt);
 }
 
-void sendTable(RoutingTable rt) {
+void sendTable(RoutingTable rt, int turn) {
     RoutingTable original = rt;
     for (; rt != RT_EMPTY; rt = getNext(rt)) {
         RoutingTable tgt = original; 
         for (; tgt != RT_EMPTY && getDirect(getNetData(tgt)); tgt = getNext(tgt))
-            sendRecord(getNetData(rt), getNetData(tgt));
+            sendRecord(getNetData(rt), getNetData(tgt), turn);
     }
 }
 
