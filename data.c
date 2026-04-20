@@ -227,12 +227,16 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
             free(dgram);
             break;
         }
+        // If we're at the end of the list, add the new network
+        // ONLY IF the distance is not infinite
         else if (rt->next == RT_EMPTY) {
-            RoutingNode *rn = malloc(sizeof(RoutingNode));
-            dgram->d += sender_nd->direct_d;
-            rn->nd = dgram;
-            rt->next = rn;
-            break;
+            if (dgram->d < INF) {
+                RoutingNode *rn = malloc(sizeof(RoutingNode));
+                dgram->d += sender_nd->direct_d;
+                rn->nd = dgram;
+                rt->next = rn;
+                break;
+            }    
         }
     }
     return; 
@@ -248,7 +252,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
     while (it->next != RT_EMPTY) {
         RoutingTable next = it->next;
         
-        printf("Checking network: %u.%u.%u.%u/%u, direct=%b, d=%d, seen %d",
+        printf("Checking network: %u.%u.%u.%u/%u, direct=%b, d=%d, seen %d\n",
                 next->nd->na.addr[0],
                 next->nd->na.addr[1],
                 next->nd->na.addr[2],
@@ -266,7 +270,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
         }
         else if (next->nd->d >= INF
                  && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
-            printf("Deleting non-neighbouring network");
+            printf("Deleting non-neighbouring network\n");
             it->next = next->next;
             free(next);
         } 
