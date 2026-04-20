@@ -15,7 +15,7 @@ NetData* parseDatagram(uint8_t *buffer, uint32_t ip);
 void NetDataToBuffer(NetData *nd, uint8_t *buffer);
 void printRoutingTable (RoutingTable rt, unsigned int turn);
 void printNetData (NetData* nd);
-void updateDistance (NetData* nd, RoutingTable rt);
+void updateDistance (NetData* nd, RoutingTable rt, int turn);
 void deleteNotSeen (RoutingTable rt, int turn);
 
 NetData* getNetData (RoutingTable rt);

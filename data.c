@@ -44,7 +44,7 @@ uint32_t addrGetBroadcast (NetAddr na) {
            + (na.addr[1]<<16)
            + (na.addr[2]<<8) 
            + (na.addr[3]) )
-           | ((1 << 32 - na.mask) - 1);
+           | ((1 << (32 - na.mask)) - 1);
 }
 
 // TODO: check if last_seen and current turn are close enough
@@ -83,22 +83,24 @@ void printNetData(NetData *nd) {
     if (nd->direct) {
         if(nd->active_router)
             printf (
-                "%u.%u.%u.%u/%u distance %u connected directly\n",
+                "%u.%u.%u.%u/%u distance %u connected directly last seen %d\n",
                 nd->na.addr[0], 
                 nd->na.addr[1], 
                 nd->na.addr[2], 
                 nd->na.addr[3], 
                 nd->na.mask,
-                nd->direct_d
+                nd->direct_d,
+                nd->last_seen
             );
         else
             printf (
-                "%u.%u.%u.%u/%u unreachable connected directly\n",
+                "%u.%u.%u.%u/%u unreachable connected directly last seen %d\n",
                 nd->na.addr[0], 
                 nd->na.addr[1], 
                 nd->na.addr[2], 
                 nd->na.addr[3], 
-                nd->na.mask
+                nd->na.mask,
+                nd->last_seen
             );
         if(nd->direct_d > nd->d)
             printf (
@@ -165,10 +167,9 @@ RoutingTable addNeighbour(NetData *nd, RoutingTable rt) {
 }
 
 NetData* scanNeighbour() {
-    uint8_t addr[4], mask;
     uint32_t d;
     NetAddr na;
-    scanf ("%hhu.%hhu.%hhu.%hhu/%u distance %u",
+    scanf ("%hhu.%hhu.%hhu.%hhu/%hhu distance %u",
         &na.addr[0], 
         &na.addr[1], 
         &na.addr[2], 

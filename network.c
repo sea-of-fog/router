@@ -70,8 +70,9 @@ int watch (uint64_t time) {
     int events = poll(&ps, 1, time);
     if (events == 0)
         return 0;
-    else if (events > 0 && (ps.revents & POLLIN != 0))
+    else if (events > 0 && ((ps.revents & POLLIN) != 0))
         return 1;
+    else return -1;
 }
 
 // TODO: add error handling
