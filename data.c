@@ -210,7 +210,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
             // do not accept information from neighbours
             if (rt->nd->direct && !rt->nd->active_router
                && turn - rt->nd->last_seen < TURNS_AFTER_INF + 2)
-                continue;
+                break;
             // if infinite distance from next on path and the distance is not yet INF,
             // mark as unreachable
             if (dgram->d >= INF && rt->nd->d < INF
