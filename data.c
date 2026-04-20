@@ -133,7 +133,7 @@ void printNetData(NetData *nd) {
     );
 
     char via[25];
-    sprintf (via, "via %u.%u.%u.%u.\n",
+    sprintf (via, "via %u.%u.%u.%u\n",
         nd->next.addr[0],
         nd->next.addr[1],
         nd->next.addr[2],
