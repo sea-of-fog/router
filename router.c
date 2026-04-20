@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     struct timespec last_sent, curr_time;
     clock_gettime(CLOCK_REALTIME, &last_sent);
 
-    unsigned int turn = 1;
+    int turn = 1;
     while (true) {
 
         clock_gettime(CLOCK_REALTIME, &curr_time);

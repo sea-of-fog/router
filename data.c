@@ -20,7 +20,7 @@ typedef struct net_data {
     bool active_router;
     uint32_t d;
     uint32_t direct_d;
-    uint8_t  last_seen;
+    int  last_seen;
 } NetData;
 
 typedef struct routing_node {
@@ -59,9 +59,10 @@ void markUnreachableRouter (NetData *nd) {
         nd->d = INF;
 }
 
-void markReachableRouter (NetData *nd) {
+void markReachableRouter (NetData *nd, int turn) {
     nd->active_router = true; 
     nd->active_network = true;
+    nd->last_seen = turn;
     if (nd->direct_d < nd->d)
         nd->d = nd->direct_d;
 }
@@ -209,7 +210,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     NetData* sender_nd = findSender(dgram, rt, turn);
     if (sender_nd == 0)
         return;
-    markReachableRouter(sender_nd);
+    markReachableRouter(sender_nd, turn);
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
             if (dgram->d >= INF 

@@ -6,8 +6,9 @@ build:
 clean:
 	rm *.o
 
-distclean: clean
+distclean:
 	rm router
+	rm *.o
 
 count:
 	wc -l *
