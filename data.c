@@ -37,10 +37,6 @@ uint32_t addrAsNumber(uint8_t addr[4]) {
     return (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 }
 
-void getNetAddr(uint8_t addr[4], uint8_t mask) {
-    return;
-}
-
 uint32_t addrGetBroadcast (NetAddr na) {
     return ( (na.addr[0]<<24)
            + (na.addr[1]<<16)
@@ -99,9 +95,9 @@ uint32_t getBroadcast (NetData *nd) {
 void getNetwork (uint8_t *buf, uint32_t addr, uint8_t mask) {
     uint32_t net_addr = addr & (~((1 << (32 - mask)) - 1));
     buf[0] = (net_addr >> 24) & 0xFF;
-    buf[0] = (net_addr >> 16) & 0xFF;
-    buf[0] = (net_addr >>  8) & 0xFF;
-    buf[0] =  net_addr        & 0xFF;
+    buf[1] = (net_addr >> 16) & 0xFF;
+    buf[2] = (net_addr >>  8) & 0xFF;
+    buf[3] =  net_addr        & 0xFF;
 }
 
 // For direct connections, always print the direct connection status
