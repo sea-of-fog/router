@@ -68,10 +68,11 @@ void markUnreachable (NetData *nd, RoutingTable rt, int turn, bool type) {
         nd->last_seen = turn;
         propagateInfinity(nd, rt, turn);
     }
-    if (type)
+    if (type) {
         nd->active_network = false;
+        nd->d = INF;
+    }
     nd->active_router  = false;
-    nd->d = INF;
 }
 
 void markReachableRouter (NetData *nd, int turn) {
@@ -121,7 +122,7 @@ void printNetData(NetData *nd) {
         nd->next.addr[3]
     );
     if (nd->direct) {
-        if(nd->active_router)
+        if(nd->active_network)
             printf (
                 "%s distance %u connected directly\n",
                 addr,
@@ -248,20 +249,20 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
     tmp.next = rt;
     RoutingTable it = &tmp;
 
-    printf("Deleting unseen, turn = %d\n", curr_turn);
+    // printf("Deleting unseen, turn = %d\n", curr_turn);
     while (it->next != RT_EMPTY) {
         RoutingTable next = it->next;
         
-        printf("Checking network: %u.%u.%u.%u/%u, direct=%b, d=%d, seen %d\n",
-                next->nd->na.addr[0],
-                next->nd->na.addr[1],
-                next->nd->na.addr[2],
-                next->nd->na.addr[3],
-                next->nd->na.mask,
-                next->nd->direct,
-                next->nd->d,
-                next->nd->last_seen
-                );
+        // printf("Checking network: %u.%u.%u.%u/%u, direct=%b, d=%d, seen %d\n",
+        //         next->nd->na.addr[0],
+        //         next->nd->na.addr[1],
+        //         next->nd->na.addr[2],
+        //         next->nd->na.addr[3],
+        //         next->nd->na.mask,
+        //         next->nd->direct,
+        //         next->nd->d,
+        //         next->nd->last_seen
+        //         );
         if (next->nd->direct) {
             if (next->nd->active_network
                 && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF)
@@ -270,7 +271,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
         }
         else if (next->nd->d >= INF
                  && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
-            printf("Deleting non-neighbouring network\n");
+            // printf("Deleting non-neighbouring network\n");
             it->next = next->next;
             free(next);
         } 
