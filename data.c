@@ -228,7 +228,8 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
             if (dgram->d >= INF 
-               && (addrGetBroadcast(rt->nd->next) == addrGetBroadcast(sender_nd->na))) {
+               && (addrAsNumber(rt->nd->next.addr) == addrAsNumber(sender_nd->na.addr))) {
+                rt->nd->d = INF;
                 rt->nd->last_seen = turn;
             }
             else if (rt->nd->d > sender_nd->direct_d + dgram->d) {
