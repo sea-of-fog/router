@@ -77,7 +77,7 @@ void printNetData(NetData *nd) {
             );
         if(nd->direct_d > nd->d)
             printf (
-                "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u" , 
+                "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u\n" , 
                 nd->na.addr[0], 
                 nd->na.addr[1], 
                 nd->na.addr[2], 
@@ -218,7 +218,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
                 next->nd->d = INF;
             } 
         }
-        else if (next->nd->d == INF
+        else if (next->nd->d >= INF
                 && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF) {
             it->next = next->next;
             free(next);
