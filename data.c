@@ -143,7 +143,7 @@ void printNetData(NetData *nd) {
         );
     else 
         printf (
-            "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u" , 
+            "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u\n" , 
             nd->na.addr[0], 
             nd->na.addr[1], 
             nd->na.addr[2], 
