@@ -53,7 +53,7 @@ NetData* receivePacket() {
     );
 
     if (packet_len < 0) {
-        error("receivePacket");
+        // error("receivePacket");
         return (NetData*) 0;
     }
     else
