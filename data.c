@@ -244,9 +244,20 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
     tmp.next = rt;
     RoutingTable it = &tmp;
 
+    printf("Deleting unseen, turn = %d\n", curr_turn);
     while (it->next != RT_EMPTY) {
         RoutingTable next = it->next;
-
+        
+        printf("Checking network: %u.%u.%u.%u/%u, direct=%b, d=%d, seen %d",
+                next->nd->na.addr[0],
+                next->nd->na.addr[1],
+                next->nd->na.addr[2],
+                next->nd->na.addr[3],
+                next->nd->na.mask,
+                next->nd->direct,
+                next->nd->d,
+                next->nd->last_seen
+                );
         if (next->nd->direct) {
             if (next->nd->active_network
                 && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF)
@@ -255,6 +266,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
         }
         else if (next->nd->d >= INF
                  && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
+            printf("Deleting non-neighbouring network");
             it->next = next->next;
             free(next);
         } 
