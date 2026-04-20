@@ -1,5 +1,6 @@
 // ASSUMPTIONS ABOUT DATA STRUCTURES
 // 1. In the routing table, all neighbouring networks come first
+// 2. If active_router is high, then so is active_network
 #include "stdio.h"
 #include "stdint.h"
 #include "stdlib.h"
@@ -48,9 +49,8 @@ uint32_t addrGetBroadcast (NetAddr na) {
            | ((1 << (32 - na.mask)) - 1);
 }
 
-// TODO: check if last_seen and current turn are close enough
 bool shouldSend(NetData *nd, int turn) {
-    return true;
+    return nd->active_network;
 }
 
 void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
@@ -64,17 +64,20 @@ void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
 
 // type = true means unreachable because of network
 void markUnreachable (NetData *nd, RoutingTable rt, int turn, bool type) {
-    if (nd->active_router) {
-        nd->last_seen = turn;
+    // Propagate infinity only if something new happnens
+    // This ensures that last_seen on records to be deleted is not constantly updated
+    if (nd->active_router || nd->active_network && type) {
         propagateInfinity(nd, rt, turn);
     }
     if (type) {
         nd->active_network = false;
         nd->d = INF;
     }
+    nd->last_seen = turn;
     nd->active_router  = false;
 }
 
+// TODO refactor as one function with two modes
 void markReachableRouter (NetData *nd, int turn) {
     nd->active_router = true; 
     nd->active_network = true;
@@ -85,25 +88,40 @@ void markReachableRouter (NetData *nd, int turn) {
 
 void markReachableNetwork (NetData *nd) {
     nd->active_network = true;
+    if (nd->direct_d < nd->d)
+        nd->d = nd->direct_d;
 }
 
 uint32_t getBroadcast (NetData *nd) {
     return addrGetBroadcast(nd->na);
 }
 
+void getNetwork (uint8_t *buf, uint32_t addr, uint8_t mask) {
+    uint32_t net_addr = addr & ((~(1 << mask)) - 1);
+    buf[0] = (net_addr >> 24) & 0xFF;
+    buf[0] = (net_addr >> 16) & 0xFF;
+    buf[0] = (net_addr >>  8) & 0xFF;
+    buf[0] =  net_addr        & 0xFF;
+}
+
 // For direct connections, always print the direct connection status
 // If an indirect connection is better (or the only one possible),
 // also print the indirect connection
-// TODO: refactor with sprintf() repeat less
+// TODO: print the network address not the router address
 void printNetData(NetData *nd) {
+
+    uint8_t net_addr[4];
+    uint32_t tmp = addrAsNumber(nd->na.addr);
+    getNetwork (net_addr, tmp, nd->na.mask);
+
     char addr[25];
     sprintf (
         addr, 
         "%u.%u.%u.%u/%u",
-        nd->na.addr[0], 
-        nd->na.addr[1], 
-        nd->na.addr[2], 
-        nd->na.addr[3], 
+        net_addr[0], 
+        net_addr[1], 
+        net_addr[2], 
+        net_addr[3], 
         nd->na.mask
     );
 
@@ -130,14 +148,14 @@ void printNetData(NetData *nd) {
             );
         else
             printf ("%s unreachable connected directly\n", addr);
-        if(nd->direct_d > nd->d || (nd->d < INF && !nd->active_router))
+        if(nd->direct_d > nd->d || (nd->d < INF && !nd->active_network))
             printf ("%s %s %s", addr, dist, via);
     }
     else if (nd->d >= INF)
         printf ("%s unreachable\n", addr);
     else 
         printf ( "%s %s %s", addr, dist, via);
-    printf("last seen %d\n", nd->last_seen);
+    // printf("last seen %d\n", nd->last_seen);
 }
 
 void printRoutingTable (RoutingTable rt, unsigned int turn) {
@@ -209,7 +227,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
             // If freshly after disconnect, 
             // do not accept information from neighbours
-            if (rt->nd->direct && !rt->nd->active_router
+            if (rt->nd->direct && !rt->nd->active_network
                && turn - rt->nd->last_seen < TURNS_AFTER_INF + 2)
                 break;
             // if infinite distance from next on path and the distance is not yet INF,
