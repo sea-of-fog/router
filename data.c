@@ -95,65 +95,48 @@ uint32_t getBroadcast (NetData *nd) {
 // also print the indirect connection
 // TODO: refactor with sprintf() repeat less
 void printNetData(NetData *nd) {
+    char addr[25];
+    sprintf (
+        addr, 
+        "%u.%u.%u.%u/%u",
+        nd->na.addr[0], 
+        nd->na.addr[1], 
+        nd->na.addr[2], 
+        nd->na.addr[3], 
+        nd->na.mask
+    );
+
+    char dist[25];
+    sprintf (
+        dist,
+        "distance %u",
+        nd->d
+    );
+
+    char via[25];
+    sprintf (via, "via %u.%u.%u.%u.\n",
+        nd->next.addr[0],
+        nd->next.addr[1],
+        nd->next.addr[2],
+        nd->next.addr[3]
+    );
     if (nd->direct) {
         if(nd->active_router)
             printf (
-                "%u.%u.%u.%u/%u distance %u connected directly\n",
-                nd->na.addr[0], 
-                nd->na.addr[1], 
-                nd->na.addr[2], 
-                nd->na.addr[3], 
-                nd->na.mask,
+                "%s distance %u connected directly\n",
+                addr,
                 nd->direct_d
             );
         else
-            printf (
-                "%u.%u.%u.%u/%u unreachable connected directly\n",
-                nd->na.addr[0], 
-                nd->na.addr[1], 
-                nd->na.addr[2], 
-                nd->na.addr[3], 
-                nd->na.mask
-            );
+            printf ("%s unreachable connected directly\n", addr);
         if(nd->direct_d > nd->d || (nd->d < INF && !nd->active_router))
-            printf (
-                "%u.%u.%u.%u/%u distance %u via %u.%u.%u.%u\n" , 
-                nd->na.addr[0], 
-                nd->na.addr[1], 
-                nd->na.addr[2], 
-                nd->na.addr[3], 
-                nd->na.mask,
-                nd->d,
-                nd->next.addr[0],
-                nd->next.addr[1],
-                nd->next.addr[2],
-                nd->next.addr[3]
-        );
+            printf ("%s %s %s", addr, dist, via);
     }
     else if (nd->d >= INF)
-        printf (
-            "%u.%u.%u.%u/%u unreachable\n",
-            nd->na.addr[0], 
-            nd->na.addr[1], 
-            nd->na.addr[2], 
-            nd->na.addr[3], 
-            nd->na.mask
-        );
+        printf ("%s unreachable\n", addr);
     else 
-        printf (
-            "%u.%u.%u.%u/%u distance %u via %u.%u.%u.%u\n" , 
-            nd->na.addr[0], 
-            nd->na.addr[1], 
-            nd->na.addr[2], 
-            nd->na.addr[3], 
-            nd->na.mask,
-            nd->d,
-            nd->next.addr[0],
-            nd->next.addr[1],
-            nd->next.addr[2],
-            nd->next.addr[3]
-        );
-    return;
+        printf ( "%s %s %s", addr, dist, via);
+    printf("last seen %d\n", nd->last_seen);
 }
 
 void printRoutingTable (RoutingTable rt, unsigned int turn) {
