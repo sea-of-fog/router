@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "stdlib.h"
 #include "stdbool.h"
+#include "arpa/inet.h"
 
 #include "config.h"
 
@@ -233,7 +234,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
                && (addrGetBroadcast(rt->nd->next) == addrGetBroadcast(sender_nd->na))) {
                 rt->nd->last_seen = turn;
             }
-            else if (rt->nd->d > sender_nd->d + dgram->d) {
+            else if (rt->nd->d > sender_nd->direct_d + dgram->d) {
                 rt->nd->d = dgram->d + sender_nd->d;
                 rt->nd->next = sender_nd->na;
             }
@@ -293,11 +294,12 @@ NetData* parseDatagram(uint8_t *buffer, uint32_t ip ) {
 }
 
 void NetDataToBuffer (NetData* nd, uint8_t *buffer) {
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
         buffer[i] = nd->na.addr[i];
     buffer[4] = nd->na.mask;
-    for (int i = 0; i < 3; i++) 
-        buffer[8 - i] = nd->d && (0xFF << (3-i)*8) >> 24;
+    uint32_t temp = htonl(nd->d);
+    for (int i = 0; i < 4; i++) 
+        buffer[5 + i] = temp && (0xFF << 8*i) >> (8*i);
 }
 
 NetData* getNetData (RoutingTable rt) {
