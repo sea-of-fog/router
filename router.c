@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
         if (packets > 0) {
             NetData *nd;
-            while (nd = receivePacket() != 0) 
+            while ((nd = receivePacket()) != 0) 
                 updateDistance(nd, routing);
         }
         else if (packets == 0) {
