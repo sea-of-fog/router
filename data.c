@@ -299,7 +299,7 @@ void NetDataToBuffer (NetData* nd, uint8_t *buffer) {
     buffer[4] = nd->na.mask;
     uint32_t temp = htonl(nd->d);
     for (int i = 0; i < 4; i++) 
-        buffer[5 + i] = temp && (0xFF << 8*i) >> (8*i);
+        buffer[5 + i] = (temp & (0xFF << (8*i))) >> (8*i);
 }
 
 NetData* getNetData (RoutingTable rt) {
