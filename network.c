@@ -6,6 +6,7 @@
 #include "poll.h"
 #include "errno.h"
 #include "string.h"
+#include "stdlib.h"
 
 #include "config.h"
 #include "data.h"
@@ -19,13 +20,13 @@ _Noreturn static void ERROR(const char* str) {
 
 void openSocket() {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sockfd < 0)
-        ERROR("socket()")
+    if (sockfd < 0)
+        ERROR("socket()");
 
     int yes = 1;
-    if(setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes)) != 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes)) != 0)
         ERROR("setsockopt() broadcast");
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes)) != 0);
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes)) != 0)
         ERROR("setsockopt() reuseport");
 
     struct sockaddr_in server_address = {0};
@@ -104,9 +105,9 @@ void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
     );
 
     if (sent != 9)
-        markUnreachable(tgt, rt, turn, true);
+        markUnreachable(tgt, rt, turn, MK_NETWORK);
     else if (sent == 9)
-        markReachableNetwork(tgt);
+        markReachable(tgt, turn, MK_NETWORK);
 }
 
 void sendTable(RoutingTable rt, int turn) {
