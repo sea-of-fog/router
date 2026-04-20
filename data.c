@@ -187,12 +187,9 @@ NetData* scanNeighbour() {
 // Iterate through the routing table to find the sender
 // return 0 if not found (this will always happen from packets received from oneself!)
 NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
-    for (; rt != RT_EMPTY; rt = rt->next) {
-        if (addrAsNumber(rt->nd->na.addr) == addrAsNumber(dgram->next.addr)) {
-            rt->nd->last_seen = turn;
+    for (; rt != RT_EMPTY; rt = rt->next)
+        if (addrAsNumber(rt->nd->na.addr) == addrAsNumber(dgram->next.addr))
             return rt->nd;
-        }
-    }
     return (NetData*) 0;
 }
 
@@ -209,14 +206,20 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     markReachableRouter(sender_nd, turn);
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
+            // If freshly after disconnect, 
+            // do not accept information from neighbours
             if (rt->nd->direct && !rt->nd->active_router
-               && turn - rt->nd->last_seen < TURNS_AFTER_INF)
+               && turn - rt->nd->last_seen < TURNS_AFTER_INF + 2)
                 continue;
-            if (dgram->d >= INF 
+            // if infinite distance from next on path and the distance is not yet INF,
+            // mark as unreachable
+            if (dgram->d >= INF && rt->nd->d < INF
                && (addrAsNumber(rt->nd->next.addr) == addrAsNumber(sender_nd->na.addr))) {
                 rt->nd->d = INF;
                 rt->nd->last_seen = turn;
             }
+            // Finally, if there are no infinities,
+            // update the distance
             else if (rt->nd->d > sender_nd->direct_d + dgram->d) {
                 rt->nd->d = dgram->d + sender_nd->d;
                 rt->nd->next = sender_nd->na;
