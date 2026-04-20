@@ -12,28 +12,34 @@
 
 static int sockfd;
 
-void error(char *where) {
-    printf("Error in %s: %s", where, strerror(errno));
+_Noreturn static void ERROR(const char* str) {
+    fprintf(stderr, "%s: %s\n", str, strerror(errno));  // NOLINT(*-err33-c)
+    exit(EXIT_FAILURE);
 }
 
-// TODO add error handling
 void openSocket() {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd < 0)
+        ERROR("socket()")
 
     int yes = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes));
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes));
+    if(setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes)) != 0)
+        ERROR("setsockopt() broadcast");
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes)) != 0);
+        ERROR("setsockopt() reuseport");
 
     struct sockaddr_in server_address = {0};
         server_address.sin_family = AF_INET;
         server_address.sin_port = htons(54321);
         server_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    bind (
+    int is_bound = bind (
         sockfd,
         (struct sockaddr*)&server_address,
         sizeof(server_address)
     );
+    if (is_bound != 0)
+        ERROR("bind(): ");
 }
 
 // TODO: fix error handling; errors are now expected
@@ -70,12 +76,12 @@ int watch (uint64_t time) {
     int events = poll(&ps, 1, time);
     if (events == 0)
         return 0;
+    else if (events < 0)
+        ERROR("poll()");
     else if (events > 0 && ((ps.revents & POLLIN) != 0))
         return 1;
-    else return -1;
 }
 
-// TODO: add error handling
 void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
     uint8_t msg[9];
     NetDataToBuffer(nd, msg);
@@ -97,10 +103,8 @@ void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
         sizeof(address)
     );
 
-    if (sent != 9) {
-        if (PRINT_SEND_ERRORS) error("sendTable");
+    if (sent != 9)
         markUnreachable(tgt, rt, turn, true);
-    }
     else if (sent == 9)
         markReachableNetwork(tgt);
 }
