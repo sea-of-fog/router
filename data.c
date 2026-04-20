@@ -274,22 +274,25 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
 }
 
 NetData* parseDatagram(uint8_t *buffer, uint32_t ip ) {
-    NetData *nd = (NetData*) malloc(sizeof(NetData));
     NetAddr next;
         next.addr[0] = (ip >> 24) & 0xFF;
         next.addr[1] = (ip >> 16) & 0xFF;
         next.addr[2] = (ip >> 8)  & 0xFF;
         next.addr[3] = ip & 0xFF;
-        nd->next = next;
+
     NetAddr na;
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
             na.addr[i] = buffer[i];
         na.mask = buffer[4];
-    nd->na = na;
-    nd->direct = false;
-    nd->d = 0;
-    for (int i = 0; i < 3; i++) 
-        nd->d += buffer[5 + i] << ((3-i) * 8);
+
+    NetData *nd = (NetData*) malloc(sizeof(NetData));
+        nd->next = next;
+        nd->na = na;
+        nd->direct = false;
+        nd->d = 0;
+        for (int i = 0; i < 4; i++) 
+            nd->d += buffer[5 + i] << ((3-i) * 8);
+
     return nd;
 }
 
