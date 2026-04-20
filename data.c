@@ -99,28 +99,26 @@ void printNetData(NetData *nd) {
     if (nd->direct) {
         if(nd->active_router)
             printf (
-                "%u.%u.%u.%u/%u distance %u connected directly last seen %d\n",
+                "%u.%u.%u.%u/%u distance %u connected directly\n",
                 nd->na.addr[0], 
                 nd->na.addr[1], 
                 nd->na.addr[2], 
                 nd->na.addr[3], 
                 nd->na.mask,
-                nd->direct_d,
-                nd->last_seen
+                nd->direct_d
             );
         else
             printf (
-                "%u.%u.%u.%u/%u unreachable connected directly last seen %d\n",
+                "%u.%u.%u.%u/%u unreachable connected directly\n",
                 nd->na.addr[0], 
                 nd->na.addr[1], 
                 nd->na.addr[2], 
                 nd->na.addr[3], 
-                nd->na.mask,
-                nd->last_seen
+                nd->na.mask
             );
         if(nd->direct_d > nd->d)
             printf (
-                "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u\n" , 
+                "%u.%u.%u.%u/%u distance %u via %u.%u.%u.%u\n" , 
                 nd->na.addr[0], 
                 nd->na.addr[1], 
                 nd->na.addr[2], 
@@ -144,7 +142,7 @@ void printNetData(NetData *nd) {
         );
     else 
         printf (
-            "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u\n" , 
+            "%u.%u.%u.%u/%u distance %u via %u.%u.%u.%u\n" , 
             nd->na.addr[0], 
             nd->na.addr[1], 
             nd->na.addr[2], 
