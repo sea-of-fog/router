@@ -46,6 +46,12 @@ uint32_t addrGetBroadcast (NetAddr na) {
            | ((1 << 32 - na.mask) - 1);
 }
 
+void markReachable (NetData *nd) {
+    nd->active = true;
+    if (nd->direct_d < nd->d)
+        nd->d = nd->direct_d;
+}
+
 uint32_t getBroadcast (NetData *nd) {
     return addrGetBroadcast(nd->na);
 }
@@ -184,6 +190,7 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     NetData* sender_nd = findSender(dgram, rt, turn);
     if (sender_nd == 0)
         return;
+    markReachable(sender_nd);
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
             if (dgram->d >= INF 
@@ -263,12 +270,6 @@ NetData* getNetData (RoutingTable rt) {
 
 RoutingTable getNext (RoutingTable rt) {
     return rt->next;
-}
-
-void markReachable (NetData *nd) {
-    nd->active = true;
-    if (nd->direct_d < nd->d)
-        nd->d = nd->direct_d;
 }
 
 void markUnreachable (NetData *nd) {
