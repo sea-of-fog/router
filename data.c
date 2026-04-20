@@ -1,0 +1,283 @@
+// ASSUMPTIONS ABOUT DATA STRUCTURES
+// 1. In the routing table, all neighbouring networks come first
+#include "stdio.h"
+#include "stdint.h"
+#include "stdlib.h"
+#include "stdbool.h"
+
+#include "config.h"
+
+typedef struct net_addr {
+    uint8_t addr[4];
+    uint8_t mask;
+} NetAddr;
+
+typedef struct net_data {
+    NetAddr  na;
+    NetAddr  next;
+    bool direct;
+    bool active;
+    uint32_t d;
+    uint32_t direct_d;
+    uint8_t  last_seen;
+} NetData;
+
+typedef struct routing_node {
+    NetData* nd;
+    struct routing_node* next;
+} RoutingNode;
+typedef RoutingNode* RoutingTable;
+
+const RoutingTable RT_EMPTY = (RoutingTable) NULL;
+
+inline uint32_t addrAsNumber(uint8_t addr[4]) {
+    return (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
+}
+
+void getNetAddr(uint8_t addr[4], uint8_t mask) {
+    return;
+}
+
+uint32_t addrGetBroadcast (NetAddr na) {
+    return ( (na.addr[0]<<24)
+           + (na.addr[1]<<16)
+           + (na.addr[2]<<8) 
+           + (na.addr[3]) )
+           | ((1 << 32 - na.mask) - 1);
+}
+
+uint32_t getBroadcast (NetData *nd) {
+    return addrGetBroadcast(nd->na);
+}
+
+// For direct connections, always print the direct connection status
+// If an indirect connection is better (or the only one possible),
+// also print the indirect connection
+// TODO: refactor with sprintf() repeat less
+void printNetData(NetData *nd) {
+    if (nd->direct) {
+        if(nd->active)
+            printf (
+                "%u.%u.%u.%u/%u distance %u connected directly\n",
+                nd->na.addr[0], 
+                nd->na.addr[1], 
+                nd->na.addr[2], 
+                nd->na.addr[3], 
+                nd->na.mask,
+                nd->direct_d
+            );
+        else
+            printf (
+                "%u.%u.%u.%u/%u unreachable connected directly\n",
+                nd->na.addr[0], 
+                nd->na.addr[1], 
+                nd->na.addr[2], 
+                nd->na.addr[3], 
+                nd->na.mask
+            );
+        if(nd->direct_d > nd->d)
+            printf (
+                "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u" , 
+                nd->na.addr[0], 
+                nd->na.addr[1], 
+                nd->na.addr[2], 
+                nd->na.addr[3], 
+                nd->na.mask,
+                nd->d,
+                nd->next.addr[0],
+                nd->next.addr[1],
+                nd->next.addr[2],
+                nd->next.addr[3]
+        );
+    }
+    else if (nd->d >= INF)
+        printf (
+            "%u.%u.%u.%u/%u unreachable\n",
+            nd->na.addr[0], 
+            nd->na.addr[1], 
+            nd->na.addr[2], 
+            nd->na.addr[3], 
+            nd->na.mask
+        );
+    else 
+        printf (
+            "%u.%u.%u.%u/%u distance %u\n via %u.%u.%u.%u" , 
+            nd->na.addr[0], 
+            nd->na.addr[1], 
+            nd->na.addr[2], 
+            nd->na.addr[3], 
+            nd->na.mask,
+            nd->d,
+            nd->next.addr[0],
+            nd->next.addr[1],
+            nd->next.addr[2],
+            nd->next.addr[3]
+        );
+    return;
+}
+
+void printRoutingTable (RoutingTable rt, unsigned int turn) {
+    printf("######################################\n");
+    printf("#              TURN %d                \n", turn);
+    printf("######################################\n");
+    while (rt != RT_EMPTY) {
+        printNetData(rt->nd);
+        rt = rt->next;
+    }
+}
+
+RoutingTable addNeighbour(NetData *nd, RoutingTable rt) {
+    RoutingTable original = rt;
+    RoutingNode *rn = malloc(sizeof(RoutingNode));
+        rn->nd = nd;
+        rn->next = RT_EMPTY;
+    if (rt == RT_EMPTY)
+        return rn;
+    while (rt->next != RT_EMPTY)
+        rt = rt->next;
+    rt->next = rn;
+    return original;  
+}
+
+NetData* scanNeighbour() {
+    uint8_t addr[4], mask;
+    uint32_t d;
+    NetAddr na;
+    scanf ("%hhu.%hhu.%hhu.%hhu/%u distance %u",
+        &na.addr[0], 
+        &na.addr[1], 
+        &na.addr[2], 
+        &na.addr[3], 
+        &na.mask, 
+        &d
+    ); 
+    NetData* nd = (NetData*) malloc(sizeof(NetData));
+        nd->na        = na;
+        nd->direct    = true;
+        nd->active    = true;
+        nd->last_seen = 0;
+        nd->d         = d;
+        nd->direct_d  = d;
+    return nd;
+}
+
+// Iterate through the routing table to find the sender
+// ERROR CODE is -1
+NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
+    for (; rt != RT_EMPTY; rt = rt->next) {
+        dgram->next.mask = rt->nd->na.mask;
+        if (addrGetBroadcast(rt->nd->na) == addrGetBroadcast(dgram->next)) {
+            rt->nd->last_seen = turn;
+            return rt->nd;
+        }
+    }
+    return (NetData*) -1;
+}
+
+// There are generally two cases:
+// 1. we find the net already in the table
+// 2. the net has to be added to the table
+//
+// The dgram NetData struct contains the datagram sender address as next,
+// the datagram distance as d
+void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
+    NetData* sender_nd = findSender(dgram, rt, turn);
+    for (; rt != RT_EMPTY; rt = rt->next) {
+        if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
+            if (dgram->d >= INF 
+               && (addrGetBroadcast(rt->nd->next) == addrGetBroadcast(sender_nd->na))) {
+                rt->nd->last_seen = turn;
+            }
+            else if (rt->nd->d > sender_nd->d + dgram->d) {
+                rt->nd->d = dgram->d + sender_nd->d;
+                rt->nd->next = sender_nd->na;
+            }
+            free(dgram);
+            break;
+        }
+        else if (rt->next == RT_EMPTY) {
+            RoutingNode *rn = malloc(sizeof(RoutingNode));
+            rn->nd = dgram;
+            rt->next = rn;
+        }
+    }
+    return; 
+}
+
+void deleteNotSeen (RoutingTable rt, int curr_turn) {
+    
+    RoutingNode tmp;
+    tmp.next = rt;
+    RoutingTable it = &tmp;
+
+    for (; it->next != RT_EMPTY; it = it->next) {
+        RoutingTable next = it->next;
+        if (next->nd->direct) {
+            if ((curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF) {
+                next->nd->active = false; 
+                next->nd->d = INF;
+            } 
+        }
+        else if (next->nd->d == INF
+                && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF) {
+            it->next = next->next;
+            free(next);
+        }
+    }
+}
+
+NetData* parseDatagram(uint8_t *buffer, uint32_t ip ) {
+    NetData *nd = (NetData*) malloc(sizeof(NetData));
+    NetAddr next;
+        next.addr[0] = (ip >> 24) & 0xFF;
+        next.addr[1] = (ip >> 16) & 0xFF;
+        next.addr[2] = (ip >> 8)  & 0xFF;
+        next.addr[3] = ip & 0xFF;
+        nd->next = next;
+    NetAddr na;
+        for (int i = 0; i < 3; i++)
+            na.addr[i] = buffer[i];
+        na.mask = buffer[4];
+    nd->na = na;
+    nd->direct = false;
+    nd->d = 0;
+    for (int i = 0; i < 3; i++) 
+        nd->d += buffer[5 + i] << ((3-i) * 8);
+    return nd;
+}
+
+void NetDataToBuffer (NetData* nd, uint8_t *buffer) {
+    for (int i = 0; i < 3; i++)
+        buffer[i] = nd->na.addr[i];
+    buffer[4] = nd->na.mask;
+    for (int i = 0; i < 3; i++) 
+        buffer[8 - i] = nd->d && (0xFF << (3-i)*8) >> 24;
+}
+
+NetData* getNetData (RoutingTable rt) {
+    return rt->nd;
+}
+
+RoutingTable getNext (RoutingTable rt) {
+    return rt->next;
+}
+
+void markReachable (NetData *nd) {
+    nd->active = true;
+    if (nd->direct_d < nd->d)
+        nd->d = nd->direct_d;
+}
+
+void markUnreachable (NetData *nd) {
+    nd->active = false;
+    if (nd->d == nd->direct_d)
+        nd->d = INF;
+}
+
+bool getActive(NetData* nd) {
+    return nd->active;
+}
+
+bool getDirect(NetData* nd) {
+    return nd->direct;
+}
