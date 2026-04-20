@@ -52,11 +52,26 @@ bool shouldSend(NetData *nd, int turn) {
     return true;
 }
 
-// TODO: propagate the infinite value to all networks directly connected via this router
-void markUnreachableRouter (NetData *nd) {
+void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
+    for (; rt != RT_EMPTY; rt = rt->next) {
+        if (addrAsNumber(rt->nd->next.addr) == addrAsNumber(nd->na.addr)) {
+            rt->nd->d = INF;
+            rt->nd->last_seen = turn;
+        }
+    }
+}
+// TODO: refactor with an additional argument
+void markUnreachable (NetData *nd, RoutingTable rt, int turn) {
+    nd->active_network = false;
+    nd->active_router  = false;
+    nd->d = INF;
+    propagateInfinity(nd, rt, turn);
+}
+
+void markUnreachableRouter (NetData *nd, RoutingTable rt, int turn) {
     nd->active_router = false;
-    if (nd->d == nd->direct_d)
-        nd->d = INF;
+    nd->d = INF;
+    propagateInfinity(nd, rt, turn);
 }
 
 void markReachableRouter (NetData *nd, int turn) {
@@ -246,7 +261,7 @@ void deleteNotSeen (RoutingTable rt, int curr_turn) {
         if (next->nd->direct) {
             if (next->nd->active_network
                 && (curr_turn - next->nd->last_seen) > TURNS_BEFORE_INF)
-                markUnreachableRouter(next->nd);
+                markUnreachableRouter(next->nd, rt, curr_turn);
         }
         else if (next->nd->d >= INF
                 && (curr_turn - next->nd->last_seen) > TURNS_AFTER_INF) {
@@ -291,14 +306,6 @@ NetData* getNetData (RoutingTable rt) {
 
 RoutingTable getNext (RoutingTable rt) {
     return rt->next;
-}
-
-// TODO: propagate the infinite value to all network directly connected via this router
-void markUnreachable (NetData *nd) {
-    nd->active_network = false;
-    nd->active_router  = false;
-    if (nd->d == nd->direct_d)
-        nd->d = INF;
 }
 
 bool getDirect(NetData* nd) {

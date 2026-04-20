@@ -24,7 +24,7 @@ RoutingTable getNext (RoutingTable rt);
 bool getDirect(NetData *nd);
 bool shouldSend(NetData *nd, int turn);
 
-void markUnreachable(NetData* nd);
+void markUnreachable(NetData* nd, RoutingTable rt, int turn);
 void markReachableNetwork(NetData* nd);
 void markReachableRouter(NetData *nd);
 

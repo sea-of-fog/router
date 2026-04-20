@@ -76,7 +76,7 @@ int watch (uint64_t time) {
 }
 
 // TODO: add error handling
-void sendRecord(NetData *nd, NetData *tgt, int turn) {
+void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
     uint8_t msg[9];
     NetDataToBuffer(nd, msg);
 
@@ -99,7 +99,7 @@ void sendRecord(NetData *nd, NetData *tgt, int turn) {
 
     if (sent != 9) {
         if (PRINT_SEND_ERRORS) error("sendTable");
-        markUnreachable(tgt);
+        markUnreachable(tgt, rt, turn);
     }
     else if (sent == 9)
         markReachableNetwork(tgt);
@@ -110,7 +110,7 @@ void sendTable(RoutingTable rt, int turn) {
     for (; rt != RT_EMPTY; rt = getNext(rt)) {
         RoutingTable tgt = original; 
         for (; tgt != RT_EMPTY && getDirect(getNetData(tgt)); tgt = getNext(tgt))
-            sendRecord(getNetData(rt), getNetData(tgt), turn);
+            sendRecord(getNetData(rt), getNetData(tgt), original, turn);
     }
 }
 
