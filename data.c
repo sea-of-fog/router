@@ -116,7 +116,7 @@ void printNetData(NetData *nd) {
                 nd->na.addr[3], 
                 nd->na.mask
             );
-        if(nd->direct_d > nd->d)
+        if(nd->direct_d > nd->d || (nd->d < INF && !nd->active_router))
             printf (
                 "%u.%u.%u.%u/%u distance %u via %u.%u.%u.%u\n" , 
                 nd->na.addr[0], 
