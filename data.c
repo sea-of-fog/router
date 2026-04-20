@@ -63,6 +63,8 @@ void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
 }
 // TODO: refactor with an additional argument
 void markUnreachable (NetData *nd, RoutingTable rt, int turn) {
+    if (nd->active_router)
+        nd->last_seen = turn;
     nd->active_network = false;
     nd->active_router  = false;
     nd->d = INF;
@@ -70,6 +72,8 @@ void markUnreachable (NetData *nd, RoutingTable rt, int turn) {
 }
 
 void markUnreachableRouter (NetData *nd, RoutingTable rt, int turn) {
+    if (nd->active_router)
+        nd->last_seen = turn;
     nd->active_router = false;
     nd->d = INF;
     propagateInfinity(nd, rt, turn);
@@ -227,6 +231,9 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
     markReachableRouter(sender_nd, turn);
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (getBroadcast(rt->nd) == getBroadcast(dgram)) {
+            if (rt->nd->direct && !rt->nd->active_router
+               && turn - rt->nd->last_seen < TURNS_AFTER_INF)
+                continue;
             if (dgram->d >= INF 
                && (addrAsNumber(rt->nd->next.addr) == addrAsNumber(sender_nd->na.addr))) {
                 rt->nd->d = INF;
