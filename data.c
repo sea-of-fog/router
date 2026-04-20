@@ -208,7 +208,6 @@ NetData* scanNeighbour() {
 // return 0 if not found (this will always happen from packets received from oneself!)
 NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
     for (; rt != RT_EMPTY; rt = rt->next) {
-        dgram->next.mask = rt->nd->na.mask;
         if (addrAsNumber(rt->nd->na.addr) == addrAsNumber(dgram->next.addr)) {
             rt->nd->last_seen = turn;
             return rt->nd;
@@ -243,8 +242,10 @@ void updateDistance (NetData* dgram, RoutingTable rt, int turn) {
         }
         else if (rt->next == RT_EMPTY) {
             RoutingNode *rn = malloc(sizeof(RoutingNode));
+            dgram->d += sender_nd->direct_d;
             rn->nd = dgram;
             rt->next = rn;
+            break;
         }
     }
     return; 
