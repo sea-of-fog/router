@@ -1,3 +1,4 @@
+// Krzysztof Szymański nr ind 338068
 // C standard library
 #include "stdint.h"
 #include "stdio.h"

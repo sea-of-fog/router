@@ -1,3 +1,4 @@
+// Krzysztof Szymański nr ind 338068
 // Length of a turn in ms
 #define TURN_MS 5000
 

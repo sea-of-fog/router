@@ -1,3 +1,4 @@
+// Krzysztof Szymański nr ind 338068
 #include "data.h"
 #include "stdint.h"
 
