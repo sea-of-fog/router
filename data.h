@@ -9,6 +9,8 @@ typedef struct routing_node* RoutingTable;
 
 extern const RoutingTable RT_EMPTY;
 
+uint32_t getBroadcast (NetData* nd);
+
 NetData* parseDatagram(uint8_t *buffer, uint32_t ip);
 void NetDataToBuffer(NetData *nd, uint8_t *buffer);
 
@@ -25,7 +27,6 @@ void updateDistance (NetData* nd, RoutingTable rt, int turn);
 void deleteNotSeen (RoutingTable rt, int turn);
 
 NetData* getNetData (RoutingTable rt);
-uint32_t getBroadcast (NetData* nd);
 RoutingTable getNext (RoutingTable rt);
 bool getDirect(NetData *nd);
 bool shouldSend(NetData *nd, int turn);

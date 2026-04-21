@@ -16,7 +16,7 @@ static uint64_t nextTurn(struct timespec curr, struct timespec last) {
     return (timedelta(curr,last) < TURN_MS) ? TURN_MS - timedelta(curr,last) : 0;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
 
     int n;
     RoutingTable routing = RT_EMPTY;

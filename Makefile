@@ -1,7 +1,7 @@
 build:
-	gcc -g -Wall -c data.c
-	gcc -g -Wall -c network.c
-	gcc -g -Wall router.c network.o data.o -o router
+	gcc -g -std=gnu18 -Wall -Wextra -c data.c
+	gcc -g -std=gnu18 -Wall -Wextra -c network.c
+	gcc -g -std=gnu18 -Wall -Wextra router.c network.o data.o -o router
 
 clean:
 	rm *.o 

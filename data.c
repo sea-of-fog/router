@@ -60,7 +60,7 @@ static uint32_t addrGetBroadcast(NetAddr na) {
     return addrAsNumber(na.addr) | ~subnetMask(na.mask);
 }
 
-static uint32_t getBroadcast(NetData *nd) {
+uint32_t getBroadcast(NetData *nd) {
     return addrGetBroadcast(nd->na);
 }
 
@@ -246,7 +246,7 @@ NetData* scanNeighbour() {
 ###############################################################################*/
 // Iterate through the routing table to find the sender
 // return 0 if not found (this will always happen from packets received from oneself!)
-static NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
+static NetData* findSender (NetData *dgram, RoutingTable rt) {
     for (; rt != RT_EMPTY; rt = rt->next)
         if (addrAsNumber(rt->nd->na.addr) == addrAsNumber(dgram->next.addr))
             return rt->nd;
@@ -260,7 +260,7 @@ static NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
 // The dgram NetData struct contains the datagram sender address as next,
 // the datagram distance as d
 void updateDistance(NetData* dgram, RoutingTable rt, int turn) {
-    NetData* sender_nd = findSender(dgram, rt, turn);
+    NetData* sender_nd = findSender(dgram, rt);
     if (sender_nd == 0)
         return;
     markReachable(sender_nd, turn, MK_ROUTER);

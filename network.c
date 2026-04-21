@@ -28,8 +28,6 @@ void openSocket() {
     int yes = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes)) != 0)
         ERROR("setsockopt() broadcast");
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes)) != 0)
-        ERROR("setsockopt() reuseport");
 
     struct sockaddr_in server_address = {0};
         server_address.sin_family = AF_INET;
