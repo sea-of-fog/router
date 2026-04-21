@@ -4,11 +4,8 @@ build:
 	gcc -g -Wall router.c network.o data.o -o router
 
 clean:
-	rm *.o
+	rm *.o || echo 
 
 distclean:
-	rm router
-	rm *.o
-
-count:
-	wc -l *
+	rm router || echo 
+	rm *.o || echo
