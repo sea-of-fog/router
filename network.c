@@ -1,3 +1,4 @@
+// C standard library
 #include "stdint.h"
 #include "stdio.h"
 #include "arpa/inet.h"
@@ -8,6 +9,7 @@
 #include "string.h"
 #include "stdlib.h"
 
+// My libraries
 #include "config.h"
 #include "data.h"
 
@@ -43,8 +45,6 @@ void openSocket() {
         ERROR("bind(): ");
 }
 
-// TODO: fix error handling; errors are now expected
-// TODO: If I receive a packet, will it be marked as reachable? Mark reachable
 NetData* receivePacket() {
 
     struct sockaddr_in sender;
@@ -61,29 +61,27 @@ NetData* receivePacket() {
     );
 
     if (packet_len < 0) {
-        // error("receivePacket");
         return (NetData*) 0;
     }
     else
        return parseDatagram(buffer, ntohl(sender.sin_addr.s_addr));
 }
 
-// TODO: handle errors better
-int watch (uint64_t time) {
+// returns 1 if there are packets to read, 0 if there are none, crashes the program on error
+int set_poll(uint64_t time) {
     struct pollfd ps;
         ps.fd = sockfd;
         ps.events = POLLIN;
         ps.revents = 0;
     int events = poll(&ps, 1, time);
-    if (events == 0)
-        return 0;
-    else if (events < 0)
+    if (events < 0)
         ERROR("poll()");
     else if (events > 0 && ((ps.revents & POLLIN) != 0))
         return 1;
+    else return 0;
 }
 
-void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
+static void sendRecord(NetData *nd, NetData *tgt, RoutingTable rt, int turn) {
     uint8_t msg[9];
     NetDataToBuffer(nd, msg);
 

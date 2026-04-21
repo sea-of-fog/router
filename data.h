@@ -9,12 +9,18 @@ typedef struct routing_node* RoutingTable;
 
 extern const RoutingTable RT_EMPTY;
 
-NetData* scanNeighbour();
-RoutingTable addNeighbour(NetData *nd, RoutingTable rt);
 NetData* parseDatagram(uint8_t *buffer, uint32_t ip);
 void NetDataToBuffer(NetData *nd, uint8_t *buffer);
-void printRoutingTable (RoutingTable rt, unsigned int turn);
+
+void markUnreachable(NetData* nd, RoutingTable rt, int turn, bool type);
+void markReachable(NetData* nd, int turn, bool type);
+
 void printNetData (NetData* nd);
+void printRoutingTable (RoutingTable rt, unsigned int turn);
+
+RoutingTable addNeighbour(NetData *nd, RoutingTable rt);
+NetData* scanNeighbour();
+
 void updateDistance (NetData* nd, RoutingTable rt, int turn);
 void deleteNotSeen (RoutingTable rt, int turn);
 
@@ -24,7 +30,5 @@ RoutingTable getNext (RoutingTable rt);
 bool getDirect(NetData *nd);
 bool shouldSend(NetData *nd, int turn);
 
-void markUnreachable(NetData* nd, RoutingTable rt, int turn, bool type);
-void markReachable(NetData* nd, int turn, bool type);
 
 #endif 

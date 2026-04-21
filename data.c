@@ -1,12 +1,11 @@
-// INVARIANTS OF DATA STRUCTURES
-// 1. In the routing table, all neighbouring networks come first
-// 2. If active_router is high, then so is active_network
+// C standard library
 #include "stdio.h"
 #include "stdint.h"
 #include "stdlib.h"
 #include "stdbool.h"
 #include "arpa/inet.h"
 
+// My libraries
 #include "config.h"
 /*###############################################################################
                                 TYPES    
@@ -35,33 +34,37 @@ typedef RoutingNode* RoutingTable;
 
 const RoutingTable RT_EMPTY = (RoutingTable) NULL;
 
+// INVARIANTS OF DATA STRUCTURES
+// 1. In the routing table, all neighbouring networks come first
+// 2. If active_router is high, then so is active_network
+
 /*###############################################################################
                   NUMERIC HANDLING OF ADDRESSES 
 ###############################################################################*/
-void addrToBuffer(uint8_t *buf, uint32_t ip) {
+static void addrToBuffer(uint8_t *buf, uint32_t ip) {
     buf[0] = (ip >> 24) & 0xFF;
     buf[1] = (ip >> 16) & 0xFF;
     buf[2] = (ip >> 8)  & 0xFF;
     buf[3] = ip & 0xFF;
 }
 
-uint32_t addrAsNumber(uint8_t addr[4]) {
+static uint32_t addrAsNumber(uint8_t addr[4]) {
     return (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 }
 
-uint32_t subnetMask(uint8_t mask) {
+static uint32_t subnetMask(uint8_t mask) {
     return 0xFFFFFFFF << (32 - mask);
 }
 
-uint32_t addrGetBroadcast(NetAddr na) {
+static uint32_t addrGetBroadcast(NetAddr na) {
     return addrAsNumber(na.addr) | ~subnetMask(na.mask);
 }
 
-uint32_t getBroadcast(NetData *nd) {
+static uint32_t getBroadcast(NetData *nd) {
     return addrGetBroadcast(nd->na);
 }
 
-void getNetwork (uint8_t *buf, uint32_t addr, uint8_t mask) {
+static void getNetwork (uint8_t *buf, uint32_t addr, uint8_t mask) {
     uint32_t net_addr = addr & subnetMask(mask);
     addrToBuffer(buf, net_addr);
 }
@@ -102,7 +105,7 @@ void NetDataToBuffer (NetData* nd, uint8_t *buffer) {
 /*###############################################################################
                             REACHABILITY
 ###############################################################################*/
-void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
+static void propagateInfinity (NetData *nd, RoutingTable rt, int turn) {
     for (; rt != RT_EMPTY; rt = rt->next) {
         if (addrAsNumber(rt->nd->next.addr) == addrAsNumber(nd->na.addr)) {
             rt->nd->d = INF;
@@ -141,7 +144,7 @@ void markReachable (NetData *nd, int turn, bool type) {
 // For direct connections, always print the direct connection status
 // If an indirect connection is better (or the only one possible),
 // also print the indirect connection
-void printNetData(NetData *nd) {
+static void printNetData(NetData *nd) {
 
     uint8_t net_addr[4];
     uint32_t tmp = addrAsNumber(nd->na.addr);
@@ -243,7 +246,7 @@ NetData* scanNeighbour() {
 ###############################################################################*/
 // Iterate through the routing table to find the sender
 // return 0 if not found (this will always happen from packets received from oneself!)
-NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
+static NetData* findSender (NetData *dgram, RoutingTable rt, int turn) {
     for (; rt != RT_EMPTY; rt = rt->next)
         if (addrAsNumber(rt->nd->na.addr) == addrAsNumber(dgram->next.addr))
             return rt->nd;
